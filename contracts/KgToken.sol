@@ -9,36 +9,71 @@ function transfer(address _to, uint256 _value) external returns (bool success);
 
 }
 
-
 contract Som
 {
-    string _name;
-    string _symbol;
+    string name;
+    string symbol;
     uint8 _decimals;
-    mapping(address=>uint256) _balances;
-    mapping (address => mapping (address => uint256)) _allowed;
-    uint256 _totalSupply;
+    
+    mapping(address=>uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 totalSupply;
 
     constructor() {
-        _name = "Tsu";
-        _symbol = "TU";
+        name = "Tsu";
+        symbol = "TU";
         _decimals = 18;
     }
 
 
-  event Transfer(
-    address indexed from,
-    address indexed to,
-    uint256 value
-  );
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+    
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
     function transfer(address to, uint256 value) public returns (bool) {
-        require(value <= _balances[msg.sender]);
+        require(value <= balances[msg.sender]);
         require(to != address(0));
 
-        _balances[msg.sender] = _balances[msg.sender] - value;
-        _balances[to] = _balances[to] + value;
+        balances[msg.sender] = balances[msg.sender] - value;
+        balances[to] = balances[to] + value;
         emit Transfer(msg.sender, to, value);
         return true;
     }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        require(spender != address(0));
+
+        allowed[msg.sender][spender] = value;
+        emit Approval(msg.sender, spender, value);
+        return true;
+    }
+
+    
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    )
+    public
+    returns (bool)
+    {
+        require(value <= balances[from]);
+        require(value <= allowed[from][msg.sender]);
+        require(to != address(0));
+
+        balances[from] = balances[from] - value;
+        balances[to] = balances[to] + value;
+        allowed[from][msg.sender] = allowed[from][msg.sender] - value;
+        emit Transfer(from, to, value);
+        return true;
+    }
+
 }
