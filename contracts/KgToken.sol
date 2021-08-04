@@ -1,13 +1,5 @@
 //SPDX-License-Identifier: Som
 pragma solidity ^0.8.4;
-import "hardhat/console.sol";
-
-interface InterfaceETC20 {
-
-// Отправка токенов на заданный адрес
-function transfer(address _to, uint256 _value) external returns (bool success);
-
-}
 
 contract Som
 {
@@ -44,7 +36,9 @@ contract Som
 
         balances[msg.sender] = balances[msg.sender] - value;
         balances[to] = balances[to] + value;
+        
         emit Transfer(msg.sender, to, value);
+        
         return true;
     }
 
@@ -52,18 +46,19 @@ contract Som
         require(spender != address(0));
 
         allowed[msg.sender][spender] = value;
+        
         emit Approval(msg.sender, spender, value);
+        
         return true;
     }
 
-    
     function transferFrom(
         address from,
         address to,
         uint256 value
     )
-    public
-    returns (bool)
+        public
+        returns (bool)
     {
         require(value <= balances[from]);
         require(value <= allowed[from][msg.sender]);
@@ -72,8 +67,35 @@ contract Som
         balances[from] = balances[from] - value;
         balances[to] = balances[to] + value;
         allowed[from][msg.sender] = allowed[from][msg.sender] - value;
+        
         emit Transfer(from, to, value);
+        
         return true;
     }
 
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        returns (bool)
+    {
+        require(spender != address(0));
+
+        allowed[msg.sender][spender] = allowed[msg.sender][spender] + addedValue;
+
+        emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
+        
+        return true;
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        returns (bool)
+    {  
+        require(subtractedValue <= allowed[msg.sender][spender]);
+
+        allowed[msg.sender][spender] = allowed[msg.sender][spender] + subtractedValue;
+
+        emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
+        
+        return true;
+    }
 }
