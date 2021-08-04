@@ -44,6 +44,7 @@ contract Som
 
     function approve(address spender, uint256 value) public returns (bool) {
         require(spender != address(0));
+        require(value <= balances[msg.sender]);
 
         allowed[msg.sender][spender] = value;
         
@@ -79,6 +80,9 @@ contract Som
     {
         require(spender != address(0));
 
+        /* Можно ли разрешать тратить больше чем есть на балансе 3 лицу ? */
+        require((addedValue + allowed[msg.sender][spender]) <= balances[msg.sender]); 
+
         allowed[msg.sender][spender] = allowed[msg.sender][spender] + addedValue;
 
         emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
@@ -97,5 +101,24 @@ contract Som
         emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
         
         return true;
+    }
+
+    function _mint(address account, uint256 amount) internal {
+        require(account != address(0));
+
+        totalSupply = totalSupply + amount;
+        balances[account] = balances[account] + amount;
+        
+        emit Transfer(address(0), account, amount);
+    }
+
+    function _burn(address account, uint256 amount) internal {
+        require(account != address(0));
+        require(amount <= balances[account]);
+
+        totalSupply = totalSupply - amount;
+        balances[account] = balances[account] - amount;
+
+        emit Transfer(account, address(0), amount);
     }
 }
