@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Som
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 
 interface InterfaceETC20 {
@@ -13,7 +13,7 @@ contract Som
 {
     string name;
     string symbol;
-    uint8 _decimals;
+    uint8 decimals;
     
     mapping(address=>uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
@@ -22,7 +22,7 @@ contract Som
     constructor() {
         name = "Tsu";
         symbol = "TU";
-        _decimals = 18;
+        decimals = 18;
     }
 
 
