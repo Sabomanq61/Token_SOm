@@ -36,7 +36,7 @@ contract Som
     constructor(string memory tokenName, string memory symbolT) {
         name_ = tokenName;
         symbol_ = symbolT;
-        balances[msg.sender] = totalSupply_;
+        _mint(msg.sender, 50000000 * (10 ** 18));
     }
 
     /*Events*/
@@ -131,16 +131,16 @@ contract Som
         return true;
     }
 
-    function _mint(address account, uint256 amount) public {
+    function _mint(address account, uint256 amount) internal {
         require(account != address(0));
 
-        totalSupply_ = totalSupply_ + amount;
+        totalSupply_ += amount;
         balances[account] += amount;
         
         emit Transfer(address(0), account, amount);
     }
 
-    function _burn(address account, uint256 amount) public {
+    function _burn(address account, uint256 amount) internal {
         require(account != address(0));
         require(amount <= balances[account]);
 

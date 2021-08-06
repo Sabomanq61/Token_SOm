@@ -1,4 +1,7 @@
 const hre = require("hardhat");
+
+import { config as dotenvConfig } from 'dotenv';
+
 const ethers = hre.ethers;
 
 
@@ -14,7 +17,7 @@ var logger = logger4js.getLogger();
 async function deploy()
 {
     const Som = await hre.ethers.getContractFactory("Som");
-    const som = await Som.deploy("Som", "Kg");
+    const som = await Som.deploy(process.env.TOKEN_NAME, process.env.SYMBOL);
 
     logger.trace("Deployed Som ", som.address);
 }
