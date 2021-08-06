@@ -19,4 +19,7 @@ async function deploy()
     logger.trace("Deployed Som ", som.address);
 }
 
-deploy();
+deploy()
+    .then(()=>process.exit(0))
+    .catch(error => {logger.console.error(error); process.exit(1)});
+

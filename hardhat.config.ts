@@ -37,21 +37,20 @@ if (!process.env.INFURA_API_KEY) {
   infuraApiKey = process.env.INFURA_API_KEY;
 }
 
+let private_key: string;
+if (!process.env.PRIVATE_KEY) {
+  throw new Error('Please set your PRIVATE_KEY in a .env file');
+} else {
+  private_key = process.env.PRIVATE_KEY;
+}
+
 function createNetworkConfig(
   network: keyof typeof chainIds,
 ): NetworkUserConfig {
   const url: string = `https://${network}.infura.io/v3/${infuraApiKey}`;
   return {
-    accounts: {
-      count: 10,
-      initialIndex: 0,
-      mnemonic,
-      path: "m/44'/60'/0'/0",
-    },
-    chainId: chainIds[network],
-    gas: "auto",
-    gasPrice: 50000000000, // gwei
     url,
+    accounts: [`0x${private_key}`]
   };
 }
 
