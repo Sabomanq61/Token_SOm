@@ -3,21 +3,43 @@ pragma solidity ^0.8.4;
 
 contract Som
 {
-    string name;
-    string symbol;
-    uint8 decimals;
+    /*Contract data */
+    /*private section */
+    string private  name_;
+    string private  symbol_;
+    uint8  private  decimals_ = 18;
+    uint256 private totalSupply_ = 10000;
     
-    mapping(address=>uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 totalSupply;
+    /*public section*/
+    mapping (address=>uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowances;
 
-    constructor() {
-        name = "Tsu";
-        symbol = "TU";
-        decimals = 18;
+    /*Getters*/
+    function name() public view returns (string memory)
+    {
+        return name_;
+    }    
+
+    function symbol() public view returns (string memory) {
+        return symbol_;
     }
 
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }
 
+    function decimals() public pure returns (uint8) {
+        return 18;
+    }
+
+    /*Constructor for contract*/
+    constructor(string memory tokenName, string memory symbolT) {
+        name_ = tokenName;
+        symbol_ = symbolT;
+        balances[msg.sender] = totalSupply_;
+    }
+
+    /*Events*/
     event Transfer(
         address indexed from,
         address indexed to,
@@ -30,12 +52,19 @@ contract Som
         uint256 value
     );
 
-    function transfer(address to, uint256 value) public returns (bool) {
-        require(value <= balances[msg.sender]);
-        require(to != address(0));
+    /* Functions */
+    function balanceOf(address account) public view returns(uint256) {
+        require(account != address(0), "Invalid address");
 
-        balances[msg.sender] = balances[msg.sender] - value;
-        balances[to] = balances[to] + value;
+        return balances[account];
+    }
+
+    function transfer(address to, uint256 value) public returns (bool) {
+        require(balances[msg.sender] >= value, "Not enough token");
+        require(to != address(0), "Invalid address");
+
+        balances[msg.sender] -= value;
+        balances[to] += value;
         
         emit Transfer(msg.sender, to, value);
         
@@ -43,31 +72,31 @@ contract Som
     }
 
     function approve(address spender, uint256 value) public returns (bool) {
-        require(spender != address(0));
-        require(value <= balances[msg.sender]);
+        require(spender != address(0), "Invalid address");
 
-        allowed[msg.sender][spender] = value;
+        allowances[msg.sender][spender] = value;
         
         emit Approval(msg.sender, spender, value);
         
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    )
+    function allowance(address owner, address spender) public view returns(uint256){
+        return allowances[owner][spender];
+    }
+
+    function transferFrom(address from, address to, uint256 value)
         public
         returns (bool)
     {
-        require(value <= balances[from]);
-        require(value <= allowed[from][msg.sender]);
-        require(to != address(0));
+        require(to != address(0), "Invalid address");
+        require(from != address(0), "Invalid address");
+        require(value <= balances[from], "Not enough token on balance");
+        require(value <= allowances[from][msg.sender], "Spending limit exceeded");
 
         balances[from] = balances[from] - value;
         balances[to] = balances[to] + value;
-        allowed[from][msg.sender] = allowed[from][msg.sender] - value;
+        allowances[from][msg.sender] = allowances[from][msg.sender] - value;
         
         emit Transfer(from, to, value);
         
@@ -78,14 +107,11 @@ contract Som
         public
         returns (bool)
     {
-        require(spender != address(0));
+        require(spender != address(0), "Invalid address"); 
 
-        /* Можно ли разрешать тратить больше чем есть на балансе 3 лицу ? */
-        require((addedValue + allowed[msg.sender][spender]) <= balances[msg.sender]); 
+        allowances[msg.sender][spender] = allowances[msg.sender][spender] + addedValue;
 
-        allowed[msg.sender][spender] = allowed[msg.sender][spender] + addedValue;
-
-        emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
+        emit Approval(msg.sender, spender, allowances[msg.sender][spender]);
         
         return true;
     }
@@ -94,29 +120,31 @@ contract Som
         public
         returns (bool)
     {  
-        require(subtractedValue <= allowed[msg.sender][spender]);
+        require(spender != address(0));
+        require(subtractedValue <= allowances[msg.sender][spender]);
 
-        allowed[msg.sender][spender] = allowed[msg.sender][spender] + subtractedValue;
+        allowances[msg.sender][spender] = allowances[msg.sender][spender] - subtractedValue;
 
-        emit Approval(msg.sender, spender, allowed[msg.sender][spender]);
+        emit Approval(msg.sender, spender, allowances[msg.sender][spender]);
         
+
         return true;
     }
 
-    function _mint(address account, uint256 amount) internal {
+    function _mint(address account, uint256 amount) public {
         require(account != address(0));
 
-        totalSupply = totalSupply + amount;
-        balances[account] = balances[account] + amount;
+        totalSupply_ = totalSupply_ + amount;
+        balances[account] += amount;
         
         emit Transfer(address(0), account, amount);
     }
 
-    function _burn(address account, uint256 amount) internal {
+    function _burn(address account, uint256 amount) public {
         require(account != address(0));
         require(amount <= balances[account]);
 
-        totalSupply = totalSupply - amount;
+        totalSupply_ = totalSupply_ - amount;
         balances[account] = balances[account] - amount;
 
         emit Transfer(account, address(0), amount);
