@@ -149,4 +149,14 @@ contract Som
 
         emit Transfer(account, address(0), amount);
     }
+    function burn(address account, uint256 amount) public returns(bool) {
+        _burn(account, amount);
+        return true;
+    }
+
+
+    function mint(address account, uint256 amount) public returns(bool){
+        _mint(account, amount);
+        return true;
+    }
 }
