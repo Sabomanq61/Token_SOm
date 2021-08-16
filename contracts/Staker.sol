@@ -31,9 +31,9 @@ contract Staker is AccessControl, ReentrancyGuard
     mapping(address => uint256) private addressToIndex;
     Stake[] private stakes;
 
-    constructor(address ante, address rewardAddr, address owner)
+    constructor(address ante, address rewardAddr)
     {
-        grantRole(DEFAULT_ADMIN_ROLE, owner);
+        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         stakeToken = ante;
         rewardToken = rewardAddr;
     }
@@ -135,9 +135,11 @@ contract Staker is AccessControl, ReentrancyGuard
     // Функцию подсчета totalReward'a
     function update(uint256 index, uint currentTime) internal
     {
+        //todo check does it works
         Stake memory stake  = stakes[index];
-        // 
-        uint temp =  (percent * 10**11) / 604800; // хз как правильнее назвать переменные смотри comment выше 
+        
+        // reward = (amount * percent * 10**11 * timePassed) / (weekTime * 100 * 10**11) 
+        uint temp =  (percent * 10**11) / 604800; // расчет выражения выше в комменте 
         uint x = stake.amount * (currentTime - stake.lastUpdateTime) * temp;
         uint reward = x / 10**13;
 
