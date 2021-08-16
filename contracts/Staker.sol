@@ -9,6 +9,8 @@ import "./KgToken.sol";
 
 contract Staker is AccessControl, ReentrancyGuard
 {
+    bytes32 public constant USER_ROLE = "USER";
+
     struct Stake
     {
         uint256 amount;         // текущее кол-во токенов на счетe
@@ -20,6 +22,8 @@ contract Staker is AccessControl, ReentrancyGuard
     uint    private week = 604800; // кол-во секунд в неделе
     uint    private minAmount = 1; // минимальная ставка
     uint8   private percent = 15;  // процент ставки начилсяемый каждую неделю
+    uint    private totalStaked;   // ОБщая сумма стейкинга
+    uint    private totalDebt;     // Общая сумма вознаграждения
     address private stakeToken;    // адрес токена ставки 
     address private rewardToken;   // адрес токена вознаграждения
     
@@ -32,6 +36,34 @@ contract Staker is AccessControl, ReentrancyGuard
         grantRole(DEFAULT_ADMIN_ROLE, owner);
         stakeToken = ante;
         rewardToken = rewardAddr;
+    }
+
+    function claimCuldown() external view returns(uint)
+    {
+        return week;
+    }
+
+    function minumumStake() external view returns(uint)
+    {
+        return minAmount;
+    }
+
+    function getTotalStaked() external view returns(uint)
+    {
+        return totalStaked;
+    }
+
+    function getTotalDebt() external view returns(uint)
+    {
+        return totalStaked;
+    }
+
+    function getUserStakeInfo() external view returns(Stake memory)
+    {
+        uint index = addressToIndex[msg.sender];
+        require(index != 0, "Account not found.");
+
+        return stakes[index];
     }
 
     function setInterestRate(uint8 percent) external{
@@ -59,6 +91,8 @@ contract Staker is AccessControl, ReentrancyGuard
             update(index, block.timestamp);
         }
 
+        grantRole(USER_ROLE, msg.sender);
+        totalStaked += amount;
         Som(stakeToken).burn(msg.sender, amount); // снять токены со счета
     }
 
@@ -73,10 +107,11 @@ contract Staker is AccessControl, ReentrancyGuard
         update(index, block.timestamp);
 
         stakes[index].amount -= amount;
+        totalStaked -= amount;
         Som(stakeToken).mint(msg.sender, amount); // зачислить токены со счет   
     }
 
-    function claim() external 
+    function claim() external nonReentrant
     {
         uint index = addressToIndex[msg.sender];
         
@@ -98,18 +133,18 @@ contract Staker is AccessControl, ReentrancyGuard
     }
 
     // Функцию подсчета totalReward'a
-    function update(uint256 index, uint currentTime) internal view
+    function update(uint256 index, uint currentTime) internal
     {
         Stake memory stake  = stakes[index];
-
+        // 
         uint temp =  (percent * 10**11) / 604800; // хз как правильнее назвать переменные смотри comment выше 
         uint x = stake.amount * (currentTime - stake.lastUpdateTime) * temp;
         uint reward = x / 10**13;
 
         stake.totalReward += reward;
+        totalDebt += reward;
         stake.lastUpdateTime = currentTime;
     }
-
 }
 
 
